@@ -1,44 +1,76 @@
 import 'package:flutter/material.dart';
+import 'package:personal_expenses/widgets/dismissible_bg.dart';
 import '../models/transaction.dart';
 import 'package:intl/intl.dart';
 
 class TransactionList extends StatelessWidget {
   final List<Transaction> transactions;
-  TransactionList({super.key, required this.transactions});
+  final Function deleteTx;
+  const TransactionList(
+      {super.key, required this.transactions, required this.deleteTx});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: transactions
-          .map((tx) => Card(
-                child: Row(children: [
-                  Container(
-                    margin: const EdgeInsets.all(10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.purple, width: 2)),
-                    child: Text(
-                      ' \$ ${tx.amount}',
-                      style: const TextStyle(
-                          color: Colors.purple, fontWeight: FontWeight.bold),
-                    ),
+    return Container(
+        child: transactions.isEmpty
+            ? Column(
+                children: [
+                  Text(
+                    "No transactions",
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tx.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        DateFormat('yyyy-MM-dd HH:mm').format(tx.date),
-                        style: const TextStyle(color: Colors.grey),
-                      )
-                    ],
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    height: 200,
+                    child: Image.asset(
+                      'assets/waiting.png',
+                      fit: BoxFit.cover,
+                    ),
                   )
-                ]),
-              ))
-          .toList(),
-    );
+                ],
+              )
+            : ListView.builder(
+                itemBuilder: (context, index) {
+                  return Dismissible(
+                    direction: DismissDirection.startToEnd,
+                    background: const DismissibleBg(),
+                    secondaryBackground: const DismissibleBg(),
+                    onDismissed: (dir) {
+                      deleteTx(transactions[index].id);
+                    },
+                    key: ObjectKey(index),
+                    child: Card(
+                      elevation: 6,
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 5),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          radius: 30,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: FittedBox(
+                                child: Text('\$${transactions[index].amount}')),
+                          ),
+                        ),
+                        title: Text(
+                          transactions[index].title,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            deleteTx(transactions[index].id);
+                          },
+                        ),
+                        subtitle: Text(DateFormat.yMMMMd()
+                            .format(transactions[index].date)),
+                      ),
+                    ),
+                  );
+                },
+                itemCount: transactions.length,
+              ));
   }
 }
